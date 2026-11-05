@@ -1,0 +1,33 @@
+{
+  "name": "backend_app",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "API de la plataforma de compraventa de segunda mano. Proyecto final del Máster Full Stack Developer (UNIR).",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env index.js",
+    "dev": "node --env-file-if-exists=.env --watch index.js"
+  },
+  "keywords": [
+    "express",
+    "init",
+    "template"
+  ],
+  "contributors": [
+    "Javier Núñez García-Bueno",
+    "Mariel Godoy Pinpin",
+    "Mario Ramírez Gallego",
+    "Pamela Olate Lopez"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0"
+  }
+}
