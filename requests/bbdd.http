@@ -1,0 +1,4 @@
+@baseUrl = http://localhost:3000
+
+### Comprobar que la API y la base de datos funcionan
+GET {{baseUrl}}/api/health
