@@ -23,9 +23,8 @@ INSERT INTO usuario (nombre_usuario, email, password_hash, ubicacion, rol, bloqu
 -- Categorías
 -- ---------------------------------------------------------
 INSERT INTO categoria (nombre) VALUES
-  ('Electrónica'),
-  ('Moda'),
-  ('Hogar'),
-  ('Deportes'),
-  ('Libros'),
+  ('Anillos'),
+  ('Collares'),
+  ('Pendientes'),
+  ('Pulseras'),
   ('Otros');
