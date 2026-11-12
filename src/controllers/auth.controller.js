@@ -38,7 +38,7 @@ const datosUsuario = (usuario) => {
  * @param {import('express').Response} res
  */
 export const registro = async (req, res) => {
-    const { nombre_usuario, email, password, ubicacion } = req.body;
+    const { nombre_usuario, email, password, ubicacion } = req.body ?? {};
 
     if (!nombre_usuario || !email || !password) {
         return res.status(400).json({ message: 'Faltan campos obligatorios: nombre_usuario, email, password' });
@@ -83,7 +83,7 @@ export const registro = async (req, res) => {
  * @param {import('express').Response} res
  */
 export const login = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body ?? {};
 
     if (!email || !password || typeof password !== 'string') {
         return res.status(400).json({ message: 'Faltan campos obligatorios: email, password' });
