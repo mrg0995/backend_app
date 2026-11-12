@@ -26,7 +26,7 @@ export const checkToken = async (req, res, next) => {
     try {
         datosToken = jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
-        return res.status(401).json({ message: 'La sesión ha expirado' });
+        return res.status(401).json({ message: 'La sesión no es válida o ha caducado' });
     }
 
     const usuario = await usuariosModel.selectById(datosToken.id);

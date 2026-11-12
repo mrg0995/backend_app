@@ -18,7 +18,7 @@ const crearToken = (usuario) => {
  * @param {import('../models/usuarios.model.js').Usuario} usuario - Usuario completo sacado de la base de datos.
  * @returns {{ id: number, nombre_usuario: string, email: string, rol: string, foto_url: string|null, ubicacion: string|null }}
  */
-const datosUsuario = (usuario) => {
+export const datosUsuario = (usuario) => {
     const { id, nombre_usuario, email, rol, foto_url, ubicacion } = usuario;
     return { id, nombre_usuario, email, rol, foto_url, ubicacion };
 };
