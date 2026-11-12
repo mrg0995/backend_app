@@ -66,3 +66,46 @@ export const registro = async (req, res) => {
         usuario: datosUsuario(usuario)
     });
 };
+
+/**
+ * Inicia sesión con email y contraseña.
+ *
+ * POST /api/auth/login
+ * Body: { email, password }
+ *
+ * Respuestas:
+ * - 200: { message, token, usuario }
+ * - 400: faltan campos obligatorios
+ * - 401: email o contraseña incorrectos
+ * - 403: la cuenta está bloqueada o eliminada
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+export const login = async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password || typeof password !== 'string') {
+        return res.status(400).json({ message: 'Faltan campos obligatorios: email, password' });
+    }
+
+    const usuario = await usuariosModel.selectByEmail(email);
+    if (!usuario) {
+        return res.status(401).json({ message: 'Email o contraseña incorrectos' });
+    }
+
+    const passwordValida = await bcrypt.compare(password, usuario.password_hash);
+    if (!passwordValida) {
+        return res.status(401).json({ message: 'Email o contraseña incorrectos' });
+    }
+
+    if (usuario.bloqueado || usuario.eliminado) {
+        return res.status(403).json({ message: 'Usuario bloqueado o eliminado' });
+    }
+
+    res.json({
+        message: 'Inicio de sesión correcto',
+        token: crearToken(usuario),
+        usuario: datosUsuario(usuario)
+    });
+}; 

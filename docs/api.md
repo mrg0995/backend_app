@@ -74,6 +74,7 @@ Response (200): mismo formato que el registro.
 }
 ```
 Errores:
+- 400: faltan campos obligatorios
 - 401: email o contraseña incorrectos
 - 403: la cuenta está bloqueada o eliminada
 
