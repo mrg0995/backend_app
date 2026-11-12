@@ -1,0 +1,10 @@
+@baseUrl = http://localhost:3000
+
+### Perfil público correcto (200)
+GET {{baseUrl}}/api/usuarios/3/publico
+
+### Usuario que no existe (404)
+GET {{baseUrl}}/api/usuarios/999/publico
+
+### Id que no es un número (400)
+GET {{baseUrl}}/api/usuarios/abc/publico
