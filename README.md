@@ -15,3 +15,14 @@ Necesitas Node 22.9 o superior, pnpm y MySQL 8.
 ## Endpoints
 
 Documentados en `docs/api.md`.
+
+Después ejecuta `db/seed.sql` para tener datos de prueba: un usuario de cada rol y algunas categorías.
+
+| Email | Rol |
+|---|---|
+| admin@test.com | administrador |
+| moderador@test.com | moderador |
+| usuario@test.com | usuario |
+| bloqueado@test.com | usuario (bloqueado) |
+
+La contraseña de todos es `12345678`.

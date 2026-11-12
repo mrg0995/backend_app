@@ -1,0 +1,126 @@
+@baseUrl = http://localhost:3000
+
+### Perfil público correcto (200)
+GET {{baseUrl}}/api/usuarios/3/publico
+
+### Usuario que no existe (404)
+GET {{baseUrl}}/api/usuarios/999/publico
+
+### Id que no es un número (400)
+GET {{baseUrl}}/api/usuarios/abc/publico
+
+### Login para obtener el token
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "usuario@test.com",
+    "password": "12345678"
+}
+
+### Mi perfil con token (200)
+GET {{baseUrl}}/api/usuarios/perfil
+Authorization: Bearer {{login.response.body.token}}
+
+### Mi perfil sin token (401)
+GET {{baseUrl}}/api/usuarios/perfil
+
+### Mi perfil con token falso (401)
+GET {{baseUrl}}/api/usuarios/perfil
+Authorization: Bearer tokenfalso123
+
+### Editar solo la ubicación (200, el nombre no cambia)
+PUT {{baseUrl}}/api/usuarios/perfil
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+    "ubicacion": "Granada"
+}
+
+### Editar nombre y ubicación (200)
+PUT {{baseUrl}}/api/usuarios/perfil
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+    "nombre_usuario": "usuario_editado",
+    "ubicacion": "Málaga"
+}
+
+### Nombre que ya tiene otro usuario (409)
+PUT {{baseUrl}}/api/usuarios/perfil
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+    "nombre_usuario": "admin"
+}
+
+### Nombre vacío (400)
+PUT {{baseUrl}}/api/usuarios/perfil
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+    "nombre_usuario": "   "
+}
+
+### Sin ningún campo (400)
+PUT {{baseUrl}}/api/usuarios/perfil
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{}
+
+### Editar sin token (401)
+PUT {{baseUrl}}/api/usuarios/perfil
+Content-Type: application/json
+
+{
+    "ubicacion": "Granada"
+}
+
+
+### Subir foto de perfil (200)
+PUT {{baseUrl}}/api/usuarios/perfil/foto
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: multipart/form-data; boundary=LimiteFormulario
+
+--LimiteFormulario
+Content-Disposition: form-data; name="foto"; filename="foto-prueba.jpg"
+Content-Type: image/jpeg
+
+< ./foto-prueba.jpg
+--LimiteFormulario--
+
+### Subir un archivo que no es imagen (400)
+PUT {{baseUrl}}/api/usuarios/perfil/foto
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: multipart/form-data; boundary=LimiteFormulario
+
+--LimiteFormulario
+Content-Disposition: form-data; name="foto"; filename="texto-prueba.txt"
+Content-Type: text/plain
+
+< ./texto-prueba.txt
+--LimiteFormulario--
+
+### Sin imagen (400)
+PUT {{baseUrl}}/api/usuarios/perfil/foto
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{}
+
+### Subir foto sin token (401)
+PUT {{baseUrl}}/api/usuarios/perfil/foto
+Content-Type: multipart/form-data; boundary=LimiteFormulario
+
+--LimiteFormulario
+Content-Disposition: form-data; name="foto"; filename="foto-prueba.jpg"
+Content-Type: image/jpeg
+
+< ./foto-prueba.jpg
+--LimiteFormulario--
