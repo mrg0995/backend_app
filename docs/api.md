@@ -6,6 +6,8 @@ Los errores siempre devuelven `{ "message": "..." }`.
 
 Las rutas protegidas necesitan la cabecera `Authorization: Bearer <token>`. Sin token devuelven 401, y con un rol sin permiso, 403.
 
+Roles: `usuario`, `moderador`, `administrador`.
+
 ## Auth
 
 ### Registrar un usuario
@@ -16,28 +18,31 @@ Headers: -
 Body:
 ```json
 {
-    "email": "ana@email.com",
     "nombre_usuario": "anagl",
-    "password": "123456",
+    "email": "ana@email.com",
+    "password": "12345678",
     "ubicacion": "Madrid"
 }
 ```
-`ubicacion` es opcional.
+`ubicacion` es opcional. La contraseña debe tener al menos 8 caracteres.
 
-Response (201):
+Response (201): el usuario queda registrado y con la sesión iniciada.
 ```json
 {
-    "id": 1,
-    "email": "ana@email.com",
-    "nombre_usuario": "anagl",
-    "foto_url": null,
-    "ubicacion": "Madrid",
-    "rol": "usuario",
-    "fecha_creacion": "2026-11-11T18:00:00.000Z"
+    "message": "Usuario registrado",
+    "token": "eyJhbGciOi...",
+    "usuario": {
+        "id": 1,
+        "nombre_usuario": "anagl",
+        "email": "ana@email.com",
+        "rol": "usuario",
+        "foto_url": null,
+        "ubicacion": "Madrid"
+    }
 }
 ```
 Errores:
-- 400: faltan campos obligatorios
+- 400: faltan campos obligatorios o la contraseña tiene menos de 8 caracteres
 - 409: el email o el nombre de usuario ya existen
 
 ### Iniciar sesión
@@ -49,11 +54,11 @@ Body:
 ```json
 {
     "email": "ana@email.com",
-    "password": "123456"
+    "password": "12345678"
 }
 ```
 
-Response (200):
+Response (200): mismo formato que el registro.
 ```json
 {
     "message": "Login correcto",
@@ -61,8 +66,10 @@ Response (200):
     "usuario": {
         "id": 1,
         "nombre_usuario": "anagl",
+        "email": "ana@email.com",
         "rol": "usuario",
-        "foto_url": null
+        "foto_url": null,
+        "ubicacion": "Madrid"
     }
 }
 ```
