@@ -20,12 +20,14 @@
     "Javier Núñez García-Bueno",
     "Mariel Godoy Pinpin",
     "Mario Ramírez Gallego",
-    "Pamela Olate Lopez"
+    "Pamela Olate Lopez",
+    "Adel Toutouh El Bouchti"
   ],
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^5.0.0"
+    "express": "^5.0.0",
+    "mysql2": "^3.24.6"
   },
   "devDependencies": {
     "@types/express": "^5.0.0"
