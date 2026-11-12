@@ -1,14 +1,25 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import usuariosModel from '../models/usuarios.model.js';
+import { datosUsuario } from './auth.controller.js';
 
 /**
- * Se queda con los datos del perfil que se pueden enviar al usuario.
- * Deja fuera bloqueado, eliminado y fecha_creacion.
- * @param {import('../models/usuarios.model.js').Usuario} usuario
- * @returns {{ id: number, nombre_usuario: string, email: string, rol: string, foto_url: string|null, ubicacion: string|null }}
+ * Borra de uploads/ el archivo de una foto que ya no se usa.
+ * Si el archivo no existe, no hace nada. Si falla por otro motivo, lo apunta en la consola
+ * pero no interrumpe la petición: la foto nueva ya está guardada.
+ * @param {string|null} foto_url - Ruta de la foto antigua, por ejemplo '/uploads/123.jpg'.
  */
-const datosPerfil = (usuario) => {
-    const { id, nombre_usuario, email, rol, foto_url, ubicacion } = usuario;
-    return { id, nombre_usuario, email, rol, foto_url, ubicacion };
+const borrarFotoAnterior = async (foto_url) => {
+    if (!foto_url || !foto_url.startsWith('/uploads/')) {
+        return;
+    }
+    try {
+        await fs.unlink(path.join('uploads', path.basename(foto_url)));
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+            console.error('No se pudo borrar la foto anterior:', error.message);
+        }
+    }
 };
 
 /**
@@ -55,7 +66,7 @@ export const getPerfilPublico = async (req, res) => {
  * @param {import('express').Response} res
  */
 export const getPerfil = (req, res) => {
-    res.json(datosPerfil(req.usuario));
+    res.json(datosUsuario(req.usuario));
 };
 
 /**
@@ -101,14 +112,14 @@ export const updatePerfil = async (req, res) => {
     await usuariosModel.update(req.usuario.id, { nombre_usuario: nuevoNombre, ubicacion: nuevaUbicacion });
     const usuario = await usuariosModel.selectById(req.usuario.id);
 
-    res.json({ message: 'Perfil actualizado', usuario: datosPerfil(usuario) });
+    res.json({ message: 'Perfil actualizado', usuario: datosUsuario(usuario) });
 };
 
 
 /**
  * Cambia la foto de perfil del usuario que ha iniciado sesión.
  * La imagen ya la ha guardado subirImagen('foto') en uploads/ y la deja en req.file.
- *
+ * Si el usuario ya tenía foto, borra el archivo anterior de uploads/.
  * PUT /api/usuarios/perfil/foto
  * Body: multipart/form-data con un campo "foto"
  *
@@ -124,9 +135,11 @@ export const updateFoto = async (req, res) => {
         return res.status(400).json({ message: 'No llega ninguna imagen en el campo foto' });
     }
 
+    const fotoAnterior = req.usuario.foto_url;
     const foto_url = `/uploads/${req.file.filename}`;
     await usuariosModel.updateFoto(req.usuario.id, foto_url);
+    await borrarFotoAnterior(fotoAnterior);
     const usuario = await usuariosModel.selectById(req.usuario.id);
 
-    res.json({ message: 'Foto actualizada', usuario: datosPerfil(usuario) });
+    res.json({ message: 'Foto actualizada', usuario: datosUsuario(usuario) });
 };

@@ -18,8 +18,12 @@ const router = Router();
 
 // Comprobación de que la API y la base de datos están funcionando correctamente
 router.get('/health', async (req, res) => {
-    await db.query('select 1');
-    res.json({ status: 'ok', database: 'ok' });
+    try {
+        await db.query('select 1');
+        res.json({ status: 'ok', database: 'ok' });
+    } catch (error) {
+        res.status(503).json({ status: 'error', database: 'error' });
+    }
 });
 
 // Rutas de usuarios
