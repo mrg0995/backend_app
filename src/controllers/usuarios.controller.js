@@ -1,15 +1,7 @@
 import usuariosModel from '../models/usuarios.model.js';
+import { datosUsuario } from './auth.controller.js';
 
-/**
- * Se queda con los datos del perfil que se pueden enviar al usuario.
- * Deja fuera bloqueado, eliminado y fecha_creacion.
- * @param {import('../models/usuarios.model.js').Usuario} usuario
- * @returns {{ id: number, nombre_usuario: string, email: string, rol: string, foto_url: string|null, ubicacion: string|null }}
- */
-const datosPerfil = (usuario) => {
-    const { id, nombre_usuario, email, rol, foto_url, ubicacion } = usuario;
-    return { id, nombre_usuario, email, rol, foto_url, ubicacion };
-};
+
 
 /**
  * Devuelve los datos públicos de un usuario: nombre, foto y ubicación.
@@ -55,7 +47,7 @@ export const getPerfilPublico = async (req, res) => {
  * @param {import('express').Response} res
  */
 export const getPerfil = (req, res) => {
-    res.json(datosPerfil(req.usuario));
+    res.json(datosUsuario(req.usuario));
 };
 
 /**
@@ -101,7 +93,7 @@ export const updatePerfil = async (req, res) => {
     await usuariosModel.update(req.usuario.id, { nombre_usuario: nuevoNombre, ubicacion: nuevaUbicacion });
     const usuario = await usuariosModel.selectById(req.usuario.id);
 
-    res.json({ message: 'Perfil actualizado', usuario: datosPerfil(usuario) });
+    res.json({ message: 'Perfil actualizado', usuario: datosUsuario(usuario) });
 };
 
 
@@ -128,5 +120,5 @@ export const updateFoto = async (req, res) => {
     await usuariosModel.updateFoto(req.usuario.id, foto_url);
     const usuario = await usuariosModel.selectById(req.usuario.id);
 
-    res.json({ message: 'Foto actualizada', usuario: datosPerfil(usuario) });
+    res.json({ message: 'Foto actualizada', usuario: datosUsuario(usuario) });
 };
