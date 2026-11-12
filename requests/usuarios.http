@@ -81,3 +81,46 @@ Content-Type: application/json
 {
     "ubicacion": "Granada"
 }
+
+
+### Subir foto de perfil (200)
+PUT {{baseUrl}}/api/usuarios/perfil/foto
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: multipart/form-data; boundary=LimiteFormulario
+
+--LimiteFormulario
+Content-Disposition: form-data; name="foto"; filename="foto-prueba.jpg"
+Content-Type: image/jpeg
+
+< ./foto-prueba.jpg
+--LimiteFormulario--
+
+### Subir un archivo que no es imagen (400)
+PUT {{baseUrl}}/api/usuarios/perfil/foto
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: multipart/form-data; boundary=LimiteFormulario
+
+--LimiteFormulario
+Content-Disposition: form-data; name="foto"; filename="texto-prueba.txt"
+Content-Type: text/plain
+
+< ./texto-prueba.txt
+--LimiteFormulario--
+
+### Sin imagen (400)
+PUT {{baseUrl}}/api/usuarios/perfil/foto
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{}
+
+### Subir foto sin token (401)
+PUT {{baseUrl}}/api/usuarios/perfil/foto
+Content-Type: multipart/form-data; boundary=LimiteFormulario
+
+--LimiteFormulario
+Content-Disposition: form-data; name="foto"; filename="foto-prueba.jpg"
+Content-Type: image/jpeg
+
+< ./foto-prueba.jpg
+--LimiteFormulario--

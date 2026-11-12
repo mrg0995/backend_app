@@ -103,3 +103,30 @@ export const updatePerfil = async (req, res) => {
 
     res.json({ message: 'Perfil actualizado', usuario: datosPerfil(usuario) });
 };
+
+
+/**
+ * Cambia la foto de perfil del usuario que ha iniciado sesión.
+ * La imagen ya la ha guardado subirImagen('foto') en uploads/ y la deja en req.file.
+ *
+ * PUT /api/usuarios/perfil/foto
+ * Body: multipart/form-data con un campo "foto"
+ *
+ * Respuestas:
+ * - 200: { message, usuario }
+ * - 400: no llega ninguna imagen (los demás 400 los responde subirImagen)
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+export const updateFoto = async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No llega ninguna imagen en el campo foto' });
+    }
+
+    const foto_url = `/uploads/${req.file.filename}`;
+    await usuariosModel.updateFoto(req.usuario.id, foto_url);
+    const usuario = await usuariosModel.selectById(req.usuario.id);
+
+    res.json({ message: 'Foto actualizada', usuario: datosPerfil(usuario) });
+};
