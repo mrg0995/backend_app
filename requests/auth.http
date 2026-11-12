@@ -1,0 +1,40 @@
+@baseUrl = http://localhost:3000
+
+### Registro correcto (201)
+POST {{baseUrl}}/api/auth/registro
+Content-Type: application/json
+
+{
+    "nombre_usuario": "anagl",
+    "email": "ana@email.com",
+    "password": "12345678",
+    "ubicacion": "Madrid"
+}
+
+### Email repetido (409)
+POST {{baseUrl}}/api/auth/registro
+Content-Type: application/json
+
+{
+    "nombre_usuario": "otra",
+    "email": "ana@email.com",
+    "password": "12345678"
+}
+
+### Faltan campos (400)
+POST {{baseUrl}}/api/auth/registro
+Content-Type: application/json
+
+{
+    "email": "c@email.com"
+}
+
+### Contraseña corta (400)
+POST {{baseUrl}}/api/auth/registro
+Content-Type: application/json
+
+{
+    "nombre_usuario": "corta",
+    "email": "corta@email.com",
+    "password": "123"
+}
