@@ -185,3 +185,87 @@ Errores:
 - 401: no hay token, ha caducado o el usuario está bloqueado
 
 `foto_url` es una ruta: para mostrar la imagen hay que añadir delante `http://localhost:3000`.
+
+## Comprobación del servicio
+
+### Estado de la API y de MySQL
+
+Method: GET
+Url: /api/health
+Headers: -
+Body: -
+
+Response (200), cuando MySQL responde:
+```json
+{ "status": "ok", "database": "ok" }
+```
+
+Response (503), cuando falla la conexión con MySQL:
+```json
+{ "status": "error", "database": "error" }
+```
+
+## Contrato con el frontend (Sprint 1)
+
+Estos son los nombres que debe utilizar Angular según los controladores del backend actual.
+No son propuestas de nuevas rutas: las he comprobado en `src/routes/` y `src/controllers/`.
+
+| Pantalla / acción | Método y ruta | Datos que envía el front | Respuesta que utiliza |
+| --- | --- | --- | --- |
+| Registro | `POST /api/auth/registro` | `nombre_usuario`, `email`, `password` y `ubicacion` opcional | `token`, `usuario` |
+| Login | `POST /api/auth/login` | `email`, `password` | `token`, `usuario` |
+| Mi perfil | `GET /api/usuarios/perfil` | Cabecera `Authorization: Bearer <token>` | Usuario con `rol`, `foto_url`, `ubicacion` |
+| Editar perfil | `PUT /api/usuarios/perfil` | `nombre_usuario` y/o `ubicacion` | `message`, `usuario` |
+| Foto de perfil | `PUT /api/usuarios/perfil/foto` | FormData con archivo `foto` | `message`, `usuario` |
+| Perfil público | `GET /api/usuarios/:idUsuario/publico` | Id en la URL | Usuario público, sin email |
+
+**Importante para el equipo:**
+
+- La propiedad de la contraseña en los cuerpos de registro y login se llama `password`, **no** `password_hash`. El hash se genera dentro del backend.
+- El registro es `/api/auth/registro`, no `/api/auth/register`.
+- La respuesta de registro y login trae `usuario`, no `user`.
+- El rol del usuario se llama `rol`. Valores posibles: `usuario`, `moderador`, `administrador`.
+- `GET /api/usuarios/perfil` devuelve directamente el usuario, mientras que el `PUT` devuelve `{ message, usuario }`.
+- Las rutas protegidas necesitan el token; los permisos de cada operación deben verificarse también en el backend, no solo ocultando enlaces del menú.
+- La ruta `/uploads/...` se sirve desde el backend. En desarrollo puede utilizarse el proxy de Angular, que también está configurado para `/api`.
+
+## Módulos todavía pendientes
+
+En el código recibido hay routers de Express creados para estos módulos, pero **no contienen endpoints** todavía:
+
+| Módulo | Prefijo previsto en el backend | Estado en el ZIP recibido |
+| --- | --- | --- |
+| Artículos | `/api/articulos` | Router vacío |
+| Categorías | `/api/categorias` | Router vacío |
+| Fotos de artículos | `/api/fotos` | Router vacío |
+| Búsqueda | `/api/busqueda` | Router vacío |
+| Conversaciones | `/api/conversaciones` | Router vacío |
+| Mensajes | `/api/mensajes` | Router vacío |
+| Notificaciones | `/api/notificaciones` | Router vacío |
+| Reportes | `/api/reportes` | Router vacío |
+| Moderación | `/api/moderacion` | Router vacío |
+| Administración | `/api/admin` | Router vacío |
+
+Cuando cada responsable implemente un endpoint, añadirá en este documento **Method, Url, Headers, Body, Response y Errores**, igual que los ejemplos de Auth y Usuarios. No hay que inventar rutas ni respuestas mientras sigan pendientes.
+
+## Prueba manual rápida
+
+Con el backend en marcha (`localhost:3000`) y después de ejecutar `db/schema.sql` y `db/seed.sql`:
+
+```bash
+# Iniciar sesión con una cuenta de prueba (rol usuario)
+curl -X POST http://localhost:3000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"usuario@test.com","password":"12345678"}'
+```
+
+El resultado debe incluir `token` y `usuario`. Después hay que copiar el token de la respuesta:
+
+```bash
+curl http://localhost:3000/api/usuarios/perfil \
+  -H 'Authorization: Bearer PEGA_AQUI_EL_TOKEN'
+```
+
+También hay cuentas sembradas para `moderador@test.com` y `admin@test.com` (misma contraseña de pruebas). El registro público crea usuarios con rol `usuario`; los otros dos roles se prueban con las cuentas de `db/seed.sql`.
+
+El script `scripts/smoke-api.mjs` automatiza estas llamadas cuando se dispone de MySQL y el servidor en marcha.
