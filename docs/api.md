@@ -229,16 +229,294 @@ No son propuestas de nuevas rutas: las he comprobado en `src/routes/` y `src/con
 - Las rutas protegidas necesitan el token; los permisos de cada operación deben verificarse también en el backend, no solo ocultando enlaces del menú.
 - La ruta `/uploads/...` se sirve desde el backend. En desarrollo puede utilizarse el proxy de Angular, que también está configurado para `/api`.
 
+## Artículos, categorías, fotos y búsqueda (Sprint 2)
+
+Resumen de las rutas del sprint 2. El detalle de cada una está en las secciones siguientes.
+
+| Método y URL | Qué hace | Quién |
+|---|---|---|
+| `GET /api/categorias` | Listar categorías | Todos |
+| `GET /api/articulos?filtros…` | Buscar o listar artículos publicados | Todos |
+| `GET /api/articulos/:idArticulo` | Detalle público | Todos |
+| `POST /api/articulos` | Crear (como borrador) | Con sesión |
+| `PUT /api/articulos/:idArticulo` | Editar | Dueño |
+| `DELETE /api/articulos/:idArticulo` | Borrar | Dueño |
+| `PATCH /api/articulos/:idArticulo/publicar` | Publicar | Dueño |
+| `PATCH /api/articulos/:idArticulo/vendido` | Marcar como vendido | Dueño |
+| `GET /api/usuarios/perfil/articulos` | Mis artículos, en todos los estados | Con sesión |
+| `GET /api/usuarios/perfil/articulos/:idArticulo` | Un artículo mío, en cualquier estado | Dueño |
+| `POST /api/fotos/articulo/:idArticulo` | Subir fotos | Dueño |
+| `DELETE /api/fotos/:idFoto` | Borrar una foto | Dueño |
+
+Los artículos de un vendedor en su perfil público usan el listado con un filtro: `GET /api/articulos?id_vendedor=4`.
+
+Notas:
+- No hay `/api/busqueda`: buscar es listar la colección de artículos con filtros, `GET /api/articulos?…`.
+- «Mis artículos» cuelga del perfil, igual que `/api/usuarios/perfil`.
+- Cada artículo tiene como máximo **5 fotos**, de 2 MB cada una (jpg, png o webp).
+
+## Objetos de artículo que devuelve la API
+
+**Artículo en un listado** (tarjeta):
+```json
+{
+    "id": 7,
+    "titulo": "Anillo de plata con circonita",
+    "precio": 45,
+    "estado_conservacion": "como_nuevo",
+    "estado": "publicado",
+    "ubicacion": "Madrid",
+    "foto_portada": "/uploads/1731400000-anillo.jpg",
+    "vendedor": { "id": 4, "nombre_usuario": "anagl" }
+}
+```
+`foto_portada` es `null` si el artículo no tiene fotos.
+
+**Artículo completo** (detalle):
+```json
+{
+    "id": 7,
+    "titulo": "Anillo de plata con circonita",
+    "descripcion": "Talla 14, plata de ley 925. Usado dos veces.",
+    "precio": 45,
+    "estado_conservacion": "como_nuevo",
+    "estado": "publicado",
+    "ubicacion": "Madrid",
+    "categoria": { "id": 1, "nombre": "Anillos" },
+    "vendedor": { "id": 4, "nombre_usuario": "anagl", "foto_url": null, "ubicacion": "Madrid" },
+    "fotos": [
+        { "id": 12, "url": "/uploads/1731400000-anillo.jpg", "posicion": 0 },
+        { "id": 13, "url": "/uploads/1731400001-anillo2.jpg", "posicion": 1 }
+    ],
+    "fecha_creacion": "2026-11-16T10:00:00.000Z",
+    "fecha_actualizacion": "2026-11-16T10:05:00.000Z"
+}
+```
+La foto con `posicion` 0 es la portada.
+
+Valores posibles:
+- `estado_conservacion`: `nuevo`, `como_nuevo`, `buen_estado`, `aceptable`
+- `estado`: `borrador`, `publicado`, `en_revision`, `retirado`, `vendido`
+
+## Categorías
+
+### Listar categorías
+
+Method: GET
+Url: /api/categorias
+Headers: -
+Body: -
+
+Response (200):
+```json
+[
+    { "id": 1, "nombre": "Anillos" },
+    { "id": 2, "nombre": "Collares" }
+]
+```
+
+## Artículos
+
+### Buscar artículos
+
+Method: GET
+Url: /api/articulos
+Headers: -
+
+Parámetros de la URL, todos opcionales:
+- `q`: texto a buscar en el título
+- `id_categoria`
+- `precio_min` y `precio_max`
+- `estado_conservacion`
+- `ubicacion`: busca la ciudad dentro del texto de ubicación
+- `id_vendedor`: solo los artículos de ese usuario (para su perfil público)
+- `orden`: `recientes` (por defecto), `precio_asc` o `precio_desc`
+- `pagina`: empieza en 1 (por defecto 1)
+- `por_pagina`: por defecto 12, como máximo 48
+
+Ejemplo: `/api/articulos?q=anillo&id_categoria=1&precio_max=100&orden=precio_asc&pagina=2`
+
+Solo devuelve artículos publicados. Sin parámetros, devuelve los más recientes (la página de inicio).
+
+Response (200):
+```json
+{
+    "articulos": [ "...artículos en formato tarjeta..." ],
+    "total": 37,
+    "pagina": 2,
+    "por_pagina": 12
+}
+```
+
+Errores:
+- 400: algún parámetro no es válido (precio no numérico, orden desconocido…)
+
+### Detalle de un artículo
+
+Method: GET
+Url: /api/articulos/:idArticulo
+Headers: -
+
+Response (200): el artículo completo.
+
+Errores:
+- 404: no existe, o no está publicado ni vendido (los borradores y los retirados solo los ve su dueño, con la ruta de su perfil)
+
+### Crear un artículo
+
+Method: POST
+Url: /api/articulos
+Headers: Authorization: Bearer <token>
+Body:
+```json
+{
+    "titulo": "Anillo de plata con circonita",
+    "descripcion": "Talla 14, plata de ley 925. Usado dos veces.",
+    "precio": 45,
+    "id_categoria": 1,
+    "estado_conservacion": "como_nuevo",
+    "ubicacion": "Madrid"
+}
+```
+`ubicacion` es opcional: si no llega, se usa la del perfil del usuario. El artículo se crea como `borrador`. Las fotos se suben después, con su propio endpoint.
+
+Response (201): el artículo completo.
+
+Errores:
+- 400: faltan campos, el título tiene más de 120 caracteres, el precio es negativo, la categoría no existe o el estado de conservación no es válido
+- 401: sin token
+
+### Editar un artículo
+
+Method: PUT
+Url: /api/articulos/:idArticulo
+Headers: Authorization: Bearer <token>
+Body: los mismos campos que al crear.
+
+Response (200): el artículo completo actualizado.
+
+Errores:
+- 400: datos no válidos (como al crear)
+- 403: el artículo no es tuyo
+- 404: el artículo no existe
+- 409: el artículo está en revisión, retirado o vendido y ya no se puede editar
+
+### Borrar un artículo
+
+Method: DELETE
+Url: /api/articulos/:idArticulo
+Headers: Authorization: Bearer <token>
+
+Response (200):
+```json
+{ "message": "Artículo borrado" }
+```
+
+Errores:
+- 403: el artículo no es tuyo
+- 404: el artículo no existe
+- 409: el artículo tiene reportes o está en revisión y no se puede borrar
+
+### Publicar un artículo
+
+Method: PATCH
+Url: /api/articulos/:idArticulo/publicar
+Headers: Authorization: Bearer <token>
+
+Pasa el artículo de `borrador` a `publicado`.
+
+Response (200): el artículo completo.
+
+Errores:
+- 403: el artículo no es tuyo
+- 404: el artículo no existe
+- 409: el artículo no está en borrador, o no tiene ninguna foto
+
+### Marcar como vendido
+
+Method: PATCH
+Url: /api/articulos/:idArticulo/vendido
+Headers: Authorization: Bearer <token>
+
+Pasa el artículo de `publicado` a `vendido`.
+
+Response (200): el artículo completo.
+
+Errores:
+- 403: el artículo no es tuyo
+- 404: el artículo no existe
+- 409: el artículo no está publicado
+
+## Mis artículos (en el perfil)
+
+### Mis artículos
+
+Method: GET
+Url: /api/usuarios/perfil/articulos
+Headers: Authorization: Bearer <token>
+
+Response (200): array de artículos en formato tarjeta, en todos los estados, del más reciente al más antiguo.
+
+### Un artículo mío (para editarlo)
+
+Method: GET
+Url: /api/usuarios/perfil/articulos/:idArticulo
+Headers: Authorization: Bearer <token>
+
+Response (200): el artículo completo, en cualquier estado.
+
+Errores:
+- 403: el artículo no es tuyo
+- 404: el artículo no existe
+
+## Fotos
+
+### Subir fotos a un artículo
+
+Method: POST
+Url: /api/fotos/articulo/:idArticulo
+Headers: Authorization: Bearer <token>
+Body: `multipart/form-data` con uno o varios archivos en el campo `fotos`. Formatos jpg, png o webp, de 2 MB como máximo cada uno.
+
+Las fotos se colocan detrás de las que ya hay. Si el artículo no tenía ninguna, la primera pasa a ser la portada.
+
+Response (201): todas las fotos del artículo.
+```json
+[
+    { "id": 12, "url": "/uploads/1731400000-anillo.jpg", "posicion": 0 }
+]
+```
+
+Errores:
+- 400: no llega ningún archivo, o algún archivo no es una imagen válida o pasa de 2 MB
+- 403: el artículo no es tuyo
+- 404: el artículo no existe
+- 409: el artículo superaría las 5 fotos
+
+### Borrar una foto
+
+Method: DELETE
+Url: /api/fotos/:idFoto
+Headers: Authorization: Bearer <token>
+
+Si se borra la portada, la siguiente foto pasa a ser la portada.
+
+Response (200): las fotos que le quedan al artículo.
+
+Errores:
+- 403: la foto es de un artículo que no es tuyo
+- 404: la foto no existe
+
 ## Módulos todavía pendientes
 
 En el código recibido hay routers de Express creados para estos módulos, pero **no contienen endpoints** todavía:
 
 | Módulo | Prefijo previsto en el backend | Estado en el ZIP recibido |
 | --- | --- | --- |
-| Artículos | `/api/articulos` | Router vacío |
-| Categorías | `/api/categorias` | Router vacío |
-| Fotos de artículos | `/api/fotos` | Router vacío |
-| Búsqueda | `/api/busqueda` | Router vacío |
+| Artículos | `/api/articulos` | Sprint 2: contrato definido arriba |
+| Categorías | `/api/categorias` | Sprint 2: contrato definido arriba |
+| Fotos de artículos | `/api/fotos` | Sprint 2: contrato definido arriba |
+| Búsqueda | — | Se elimina: la búsqueda es `GET /api/articulos` con filtros |
 | Conversaciones | `/api/conversaciones` | Router vacío |
 | Mensajes | `/api/mensajes` | Router vacío |
 | Notificaciones | `/api/notificaciones` | Router vacío |
