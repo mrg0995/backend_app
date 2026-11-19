@@ -1,15 +1,23 @@
-@baseUrl = http://localhost:3000/api
-@token = PEGA_AQUI_EL_TOKEN_DE_LOGIN
-@tokenOtroUsuario = PEGA_AQUI_EL_TOKEN_DE_OTRO_USUARIO
+@baseUrl = http://localhost:3000
 
 ### Login para obtener el token
 # @name login
-POST {{baseUrl}}/api/auth/login
+POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
     "email": "usuario@test.com",
     "password": "12345678"
+}
+
+### Login 2: admin@test.com (otro usuario para probar 403)
+# @name login_admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "12345678"
 }
 
 ### 1. Listar categorías (200)

@@ -1,6 +1,6 @@
 import * as ArticulosModel from '../models/articulos.model.js';
 import * as CategoriasModel from '../models/categorias.model.js';
-import * as UsuariosModel from '../models/usuarios.model.js';
+import UsuariosModel from '../models/usuarios.model.js';
 
 const ESTADOS_CONSERVACION_VALIDOS = ['nuevo', 'como_nuevo', 'buen_estado', 'aceptable'];
 
