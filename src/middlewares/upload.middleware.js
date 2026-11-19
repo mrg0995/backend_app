@@ -82,3 +82,39 @@ export const subirImagen = (campo) => {
         });
     };
 };
+/**
+ * Recibe varias imágenes en el campo indicado y las guarda en uploads/.
+ * Deja los archivos en req.files (un array, vacío si no llega ninguno).
+ *
+ * Ejemplo: router.post('/articulo/:id', checkToken, subirImagenes('fotos', 10), subirFotos);
+ *
+ * Respuestas:
+ * - 400: algún archivo no es una imagen permitida, pesa más de 2 MB, llega en un campo distinto
+ *   o se envían más archivos del máximo
+ *
+ * @param {string} campo - Nombre del campo del formulario que trae las imágenes.
+ * @param {number} maximo - Tope de archivos por petición.
+ * @returns {import('express').RequestHandler}
+ */
+export const subirImagenes = (campo, maximo) => {
+    return (req, res, next) => {
+        upload.array(campo, maximo)(req, res, (error) => {
+            if (!error) {
+                return next();
+            }
+            if (error.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ message: 'Cada imagen no puede pesar más de 2 MB' });
+            }
+            if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+                return res.status(400).json({ message: `Las imágenes deben enviarse en el campo "${campo}" (máximo ${maximo} por petición)` });
+            }
+            if (error.code === 'TIPO_NO_PERMITIDO') {
+                return res.status(400).json({ message: error.message });
+            }
+            if (error instanceof multer.MulterError) {
+                return res.status(400).json({ message: `Error al subir las imágenes: ${error.message}` });
+            }
+            next(error);
+        });
+    };
+};
