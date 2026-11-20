@@ -12,8 +12,7 @@ export const checkArticuloDueno = async (req, res, next) => {
             return res.status(404).json({ message: 'El artículo no existe' });
         }
 
-        // Ajusta req.user.id si tu auth.middleware usa req.usuario.id
-        const idUsuarioLogueado = req.user?.id ?? req.usuario?.id;
+        const idUsuarioLogueado = req.usuario.id;
 
         if (articulo.vendedor.id !== idUsuarioLogueado) {
             return res.status(403).json({ message: 'El artículo no es tuyo' });
