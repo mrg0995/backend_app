@@ -1,0 +1,90 @@
+@url = http://localhost:3000/api
+# Inicia sesión con requests/auth.http, copia el token aquí
+@token = PEGA_AQUI_EL_TOKEN
+# Id de un artículo tuyo, y de otro que NO sea tuyo
+@idArticulo = 1
+@idArticuloAjeno = 2
+@idFoto = 1
+
+### OK: subir una foto
+POST {{url}}/fotos/articulo/{{idArticulo}}
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=frontera
+
+--frontera
+Content-Disposition: form-data; name="fotos"; filename="foto-prueba.jpg"
+Content-Type: image/jpeg
+
+< ./foto-prueba.jpg
+--frontera--
+
+### MAL: sin token (401)
+POST {{url}}/fotos/articulo/{{idArticulo}}
+Content-Type: multipart/form-data; boundary=frontera
+
+--frontera
+Content-Disposition: form-data; name="fotos"; filename="foto-prueba.jpg"
+Content-Type: image/jpeg
+
+< ./foto-prueba.jpg
+--frontera--
+
+### MAL: artículo ajeno (403)
+POST {{url}}/fotos/articulo/{{idArticuloAjeno}}
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=frontera
+
+--frontera
+Content-Disposition: form-data; name="fotos"; filename="foto-prueba.jpg"
+Content-Type: image/jpeg
+
+< ./foto-prueba.jpg
+--frontera--
+
+### MAL: artículo que no existe (404)
+POST {{url}}/fotos/articulo/99999
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=frontera
+
+--frontera
+Content-Disposition: form-data; name="fotos"; filename="foto-prueba.jpg"
+Content-Type: image/jpeg
+
+< ./foto-prueba.jpg
+--frontera--
+
+### MAL: archivo que no es imagen (400)
+POST {{url}}/fotos/articulo/{{idArticulo}}
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=frontera
+
+--frontera
+Content-Disposition: form-data; name="fotos"; filename="prueba.txt"
+Content-Type: text/plain
+
+< ./prueba.txt
+--frontera--
+
+### MAL: sin archivos (400)
+POST {{url}}/fotos/articulo/{{idArticulo}}
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=frontera
+
+--frontera
+Content-Disposition: form-data; name="otro"
+
+nada
+--frontera--
+
+### 409: repite la primera petición hasta pasar de 5 fotos
+
+### OK: borrar una foto
+DELETE {{url}}/fotos/{{idFoto}}
+Authorization: Bearer {{token}}
+
+### MAL: foto que no existe (404)
+DELETE {{url}}/fotos/99999
+Authorization: Bearer {{token}}
+
+### MAL: sin token (401)
+DELETE {{url}}/fotos/{{idFoto}}
