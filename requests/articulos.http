@@ -1,0 +1,145 @@
+@baseUrl = http://localhost:3000/api
+
+### Login para obtener el token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "usuario@test.com",
+    "password": "12345678"
+}
+
+### Login 2: admin@test.com (otro usuario para probar 403)
+# @name login_admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "12345678"
+}
+
+### 1. Listar categorías (200)
+GET {{baseUrl}}/categorias
+
+### 2. Crear artículo válido sin ubicación (hereda ubicación del perfil, estado borrador -> 201)
+POST {{baseUrl}}/articulos
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Anillo de plata con circonita",
+  "descripcion": "Talla 14, plata de ley 925. Usado dos veces.",
+  "precio": 45,
+  "id_categoria": 1,
+  "estado_conservacion": "como_nuevo"
+}
+
+### 3. Crear artículo con ubicación propia (201)
+POST {{baseUrl}}/articulos
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Pulsera rígida de acero",
+  "descripcion": "En perfecto estado, con estuche original.",
+  "precio": 25.5,
+  "id_categoria": 1,
+  "estado_conservacion": "nuevo",
+  "ubicacion": "Sevilla"
+}
+
+### 4. Crear artículo inválido: precio negativo (400)
+POST {{baseUrl}}/articulos
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Collar roto",
+  "descripcion": "Falta el cierre.",
+  "precio": -10,
+  "id_categoria": 1,
+  "estado_conservacion": "aceptable"
+}
+
+### 5. Crear artículo sin token (401)
+POST {{baseUrl}}/articulos
+Content-Type: application/json
+
+{
+  "titulo": "Pendientes de oro",
+  "descripcion": "Pequeños y ligeros.",
+  "precio": 60,
+  "id_categoria": 1,
+  "estado_conservacion": "buen_estado"
+}
+
+### 6. Mis artículos en todos los estados (200)
+GET {{baseUrl}}/usuarios/perfil/articulos
+Authorization: Bearer {{login.response.body.token}}
+
+### 7. Ver uno de mis artículos por ID en cualquier estado (200)
+GET {{baseUrl}}/usuarios/perfil/articulos/1
+Authorization: Bearer {{login.response.body.token}}
+
+### 8. Ver artículo de otro usuario desde mi perfil (403)
+GET {{baseUrl}}/usuarios/perfil/articulos/1
+Authorization: Bearer {{login.response.body.token}}
+
+### 9. Detalle público de artículo en borrador (debe dar 404 porque aún no está publicado)
+GET {{baseUrl}}/articulos/1
+
+### 10. Intentar publicar artículo sin fotos (debe dar 409)
+PATCH {{baseUrl}}/articulos/1/publicar
+Authorization: Bearer {{login.response.body.token}}
+
+### 11. Publicar artículo que ya tiene foto (200)
+PATCH {{baseUrl}}/articulos/1/publicar
+Authorization: Bearer {{login.response.body.token}}
+
+### 12. Detalle público ya publicado (200)
+GET {{baseUrl}}/articulos/1
+
+### 13. Editar artículo publicado (200)
+PUT {{baseUrl}}/articulos/1
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Anillo de plata con circonita (rebajado)",
+  "descripcion": "Talla 14, plata de ley 925. Muy cuidada.",
+  "precio": 38,
+  "id_categoria": 1,
+  "estado_conservacion": "como_nuevo",
+  "ubicacion": "Madrid"
+}
+
+### 14. Intentar editar artículo de otro usuario (403)
+PUT {{baseUrl}}/articulos/1
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "titulo": "Intento de edición ajena",
+  "descripcion": "No debería funcionar.",
+  "precio": 10,
+  "id_categoria": 1,
+  "estado_conservacion": "buen_estado"
+}
+
+### 15. Intentar marcar como vendido un artículo que está en borrador (409)
+PATCH {{baseUrl}}/articulos/2/vendido
+Authorization: Bearer {{login.response.body.token}}
+
+### 16. Marcar como vendido un artículo publicado (200)
+PATCH {{baseUrl}}/articulos/1/vendido
+Authorization: Bearer {{login.response.body.token}}
+
+### 17. Intentar borrar artículo inexistente (404)
+DELETE {{baseUrl}}/articulos/999999
+Authorization: Bearer {{login.response.body.token}}
+
+### 18. Borrar artículo propio sin reportes ni revisión (200)
+DELETE {{baseUrl}}/articulos/2
+Authorization: Bearer {{login.response.body.token}}
