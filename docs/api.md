@@ -324,7 +324,7 @@ Url: /api/articulos
 Headers: -
 
 Parámetros de la URL, todos opcionales:
-- `q`: texto a buscar en el título
+- `q`: texto a buscar en título, descripción y categoría
 - `id_categoria`
 - `precio_min` y `precio_max`
 - `estado_conservacion`
@@ -547,3 +547,67 @@ curl http://localhost:3000/api/usuarios/perfil \
 También hay cuentas sembradas para `moderador@test.com` y `admin@test.com` (misma contraseña de pruebas). El registro público crea usuarios con rol `usuario`; los otros dos roles se prueban con las cuentas de `db/seed.sql`.
 
 El script `scripts/smoke-api.mjs` automatiza estas llamadas cuando se dispone de MySQL y el servidor en marcha.
+
+## Notas de implementación: búsqueda (Sprint 2, Adel)
+
+**Method:** GET
+**Url:** `/api/articulos`
+**Headers:** no requiere sesión
+**Body:** ninguno
+
+La ruta permite listar únicamente los artículos con `estado = 'publicado'`.
+Está montada en `articulos.routes.js`, no existe una ruta separada `/api/busqueda`.
+
+| Parámetro | Tipo y valores admitidos | Por defecto |
+| --- | --- | --- |
+| `q` | Texto de hasta 120 caracteres; máximo 10 palabras | Sin filtro |
+| `id_categoria` | Entero positivo | Sin filtro |
+| `precio_min` / `precio_max` | Números entre 0 y 99999999.99, con hasta 2 decimales | Sin filtro |
+| `estado_conservacion` | `nuevo`, `como_nuevo`, `buen_estado`, `aceptable` | Sin filtro |
+| `ubicacion` | Texto de hasta 100 caracteres | Sin filtro |
+| `id_vendedor` | Entero positivo | Sin filtro |
+| `orden` | `recientes`, `precio_asc`, `precio_desc` | `recientes` |
+| `pagina` | Entero de 1 a 1000000 | 1 |
+| `por_pagina` | Entero de 1 a 48 | 12 |
+
+Las palabras de `q` se buscan en **título, descripción y nombre de categoría**.
+Para hacer coincidir algunos plurales se quita `es` o `s` al final de cada palabra:
+`collares` busca `collar` y `anillos` busca `anillo`.
+Si se buscan varias palabras, el artículo debe coincidir con todas ellas (pueden estar en distintos campos).
+
+La búsqueda usa parámetros SQL (`?`) para todos los datos del usuario.
+El orden se elige únicamente entre tres columnas predefinidas, nunca con texto libre.
+Los resultados con el mismo precio se ordenan también por id, para que la paginación sea estable.
+
+**Response (200):**
+```json
+{
+  "articulos": [
+    {
+      "id": 1,
+      "titulo": "Anillo de plata con circonita",
+      "precio": 45,
+      "estado_conservacion": "como_nuevo",
+      "estado": "publicado",
+      "ubicacion": "Madrid",
+      "foto_portada": "/uploads/seed-01.jpg",
+      "vendedor": { "id": 5, "nombre_usuario": "ana_joyas" }
+    }
+  ],
+  "total": 1,
+  "pagina": 1,
+  "por_pagina": 12
+}
+```
+`precio` se envía como número, no como cadena. Si no hay resultados, `articulos` es un array vacío y `total` es 0.
+
+**Errores:**
+- 400: cualquier filtro inválido, por ejemplo `orden=otro`, `pagina=0`, `por_pagina=49`, `precio_min=abc`, valores duplicados o `precio_min > precio_max`.
+- 500: error interno o de base de datos (manejado por Express).
+
+**Fotos de artículos:** se permiten **5 imágenes como máximo por artículo**, de **2 MB cada una**.
+Formatos: JPG, PNG y WEBP; campo del formulario: `fotos`.
+Las imágenes de muestra del seed se guardan en `db/fotos-seed/`; para mostrarlas se copian a `uploads/` siguiendo el README.
+
+Para probar los filtros y sus errores, usar `requests/busqueda.http`.
+Para el recorrido completo (crear borrador → subir foto → publicar → buscar → detalle → vender → borrar), usar las rutas documentadas en Artículos y Fotos y una base de datos de prueba.
