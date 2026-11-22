@@ -32,16 +32,15 @@ const borrarSubidas = async (archivos) => {
 /**
  * Sube una o varias fotos a un artículo. Se colocan detrás de las que ya tiene;
  * si no tenía ninguna, la primera queda como portada (posición 0).
- * Las imágenes ya las ha guardado subirImagenes('fotos', 10) en uploads/ y las deja en req.files.
+ * El id y el dueño del artículo los comprueba checkArticuloDueno antes de guardar nada.
+ * Las imágenes las ha guardado subirImagenes('fotos', 10) en uploads/ y las deja en req.files.
  *
  * POST /api/fotos/articulo/:idArticulo
  * Body: multipart/form-data con uno o varios archivos en el campo "fotos"
  *
  * Respuestas:
  * - 201: array con todas las fotos del artículo
- * - 400: el id no es un número o no llega ninguna imagen
- * - 403: el artículo no es tuyo
- * - 404: el artículo no existe
+ * - 400: no llega ninguna imagen (el resto de los 400, 403 y 404 los responde checkArticuloDueno)
  * - 409: el artículo superaría las 5 fotos
  *
  * @param {import('express').Request} req
@@ -51,24 +50,8 @@ export const subirFotos = async (req, res) => {
     const archivos = req.files ?? [];
     const idArticulo = Number(req.params.idArticulo);
 
-    if (!Number.isInteger(idArticulo) || idArticulo <= 0) {
-        await borrarSubidas(archivos);
-        return res.status(400).json({ message: 'El id del artículo no es válido' });
-    }
-
     if (archivos.length === 0) {
         return res.status(400).json({ message: 'No llega ninguna imagen en el campo fotos' });
-    }
-
-    const articulo = await fotosModel.selectArticulo(idArticulo);
-    if (!articulo) {
-        await borrarSubidas(archivos);
-        return res.status(404).json({ message: 'Artículo no encontrado' });
-    }
-
-    if (articulo.id_usuario !== req.usuario.id) {
-        await borrarSubidas(archivos);
-        return res.status(403).json({ message: 'Este artículo no es tuyo' });
     }
 
     const actuales = await fotosModel.countByArticulo(idArticulo);
