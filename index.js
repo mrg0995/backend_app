@@ -1,9 +1,12 @@
 // Server creation and configuration
 import http from "node:http";
 import app from "./src/app.js";
+import { iniciarSocket } from "./src/socket/index.js";
 
 // Server creation
 const server = http.createServer(app);
+
+iniciarSocket(server);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT);
