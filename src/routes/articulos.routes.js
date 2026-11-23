@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { checkToken } from '../middlewares/auth.middleware.js';
 import { checkArticuloDueno } from '../middlewares/articulos.middleware.js';
+import { buscarArticulos } from '../controllers/busqueda.controller.js';
 import {
     getByIdPublico,
     create,
@@ -12,7 +13,7 @@ import {
 
 const router = Router();
 
-// Persona 3 (Adel) añade aquí: router.get('/', buscarArticulos);
+router.get('/', buscarArticulos);
 
 router.get('/:idArticulo', getByIdPublico);
 router.post('/', checkToken, create);

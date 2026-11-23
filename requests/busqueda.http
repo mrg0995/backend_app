@@ -1,0 +1,55 @@
+@baseUrl = http://localhost:3000/api
+
+### Sin filtros (12 publicados recientes)
+GET {{baseUrl}}/articulos
+
+### Plurales: anillos debe encontrar artículos con Anillo
+GET {{baseUrl}}/articulos?q=anillos
+
+### Plurales: collares debe encontrar Collar
+GET {{baseUrl}}/articulos?q=collares
+
+### Buscar también en descripción y nombre de categoría
+GET {{baseUrl}}/articulos?q=plata
+
+### Categoría, precio, estado y ubicación
+GET {{baseUrl}}/articulos?id_categoria=1&precio_min=10&precio_max=100&estado_conservacion=como_nuevo&ubicacion=Madrid
+
+### Orden ascendente y paginación
+GET {{baseUrl}}/articulos?orden=precio_asc&pagina=2&por_pagina=5
+
+### Orden descendente
+GET {{baseUrl}}/articulos?orden=precio_desc
+
+### Vendedor específico (id 5 en una base recién creada con el seed)
+GET {{baseUrl}}/articulos?id_vendedor=5
+
+### Sin resultados: debe responder 200, articulos:[], total:0
+GET {{baseUrl}}/articulos?q=joyainexistente987
+
+### Error 400: precio no numérico
+GET {{baseUrl}}/articulos?precio_min=abc
+
+### Error 400: mínimo superior al máximo
+GET {{baseUrl}}/articulos?precio_min=100&precio_max=5
+
+### Error 400: orden desconocido
+GET {{baseUrl}}/articulos?orden=cualquiercosa
+
+### Error 400: página cero
+GET {{baseUrl}}/articulos?pagina=0
+
+### Error 400: más de 48 resultados
+GET {{baseUrl}}/articulos?por_pagina=49
+
+### Error 400: estado inválido
+GET {{baseUrl}}/articulos?estado_conservacion=regular
+
+### Error 400: categoría inválida
+GET {{baseUrl}}/articulos?id_categoria=-1
+
+### Error 400: parámetro no contemplado
+GET {{baseUrl}}/articulos?foo=bar
+
+### Comprobar que la ruta antigua ya no existe (404)
+GET {{baseUrl}}/busqueda?q=anillo
