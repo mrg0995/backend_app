@@ -582,6 +582,7 @@ Valores posibles de `tipo`: `mensaje`, `cambio_estado`, `moderacion`.
 
 ### Abrir una conversación
 
+
 Method: POST
 Url: /api/conversaciones
 Headers: Authorization: Bearer <token>
@@ -628,6 +629,7 @@ Headers: Authorization: Bearer <token>
 Response (200): la conversación.
 
 Errores:
+- 400: el id de la conversación no es un número
 - 403: no participas en la conversación
 - 404: la conversación no existe
 
@@ -640,6 +642,7 @@ Headers: Authorization: Bearer <token>
 Response (200): array de mensajes, del más antiguo al más reciente.
 
 Errores:
+- 400: el id de la conversación no es un número
 - 403: no participas en la conversación
 - 404: la conversación no existe
 
@@ -657,6 +660,7 @@ Response (200):
 ```
 
 Errores:
+- 400: el id de la conversación no es un número
 - 403: no participas en la conversación
 - 404: la conversación no existe
 
