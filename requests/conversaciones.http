@@ -1,0 +1,98 @@
+@baseUrl = http://localhost:3000/api
+
+### Login comprador: usuario@test.com
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "usuario@test.com",
+    "password": "12345678"
+}
+
+### Login vendedora: ana.joyas@test.com (dueña del artículo 1)
+# @name login_ana
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "ana.joyas@test.com",
+    "password": "12345678"
+}
+
+### Login de alguien que no participa: luis.joyas@test.com
+# @name login_luis
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "luis.joyas@test.com",
+    "password": "12345678"
+}
+
+### 1. Abrir chat sobre el artículo 1 (201 la primera vez, 200 las siguientes)
+# @name abrir
+POST {{baseUrl}}/conversaciones
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+    "id_articulo": 1
+}
+
+### 2. Abrir chat sobre mi propio artículo (403)
+POST {{baseUrl}}/conversaciones
+Authorization: Bearer {{login_ana.response.body.token}}
+Content-Type: application/json
+
+{
+    "id_articulo": 1
+}
+
+### 3. Abrir chat sobre un artículo vendido, en borrador o que no existe (404)
+POST {{baseUrl}}/conversaciones
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+    "id_articulo": 14
+}
+
+### 4. Sin id_articulo (400)
+POST {{baseUrl}}/conversaciones
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{}
+
+### 5. Mi bandeja (comprador)
+GET {{baseUrl}}/conversaciones
+Authorization: Bearer {{login.response.body.token}}
+
+### 6. Mi bandeja (vendedora): soy = vendedor
+GET {{baseUrl}}/conversaciones
+Authorization: Bearer {{login_ana.response.body.token}}
+
+### 7. Mensajes sin leer
+GET {{baseUrl}}/conversaciones/sin-leer
+Authorization: Bearer {{login.response.body.token}}
+
+### 8. Una conversación
+GET {{baseUrl}}/conversaciones/{{abrir.response.body.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### 9. Una conversación en la que no participo (403)
+GET {{baseUrl}}/conversaciones/{{abrir.response.body.id}}
+Authorization: Bearer {{login_luis.response.body.token}}
+
+### 10. Una conversación que no existe (404)
+GET {{baseUrl}}/conversaciones/9999
+Authorization: Bearer {{login.response.body.token}}
+
+### 11. Historial de mensajes
+GET {{baseUrl}}/conversaciones/{{abrir.response.body.id}}/mensajes
+Authorization: Bearer {{login.response.body.token}}
+
+### 12. Marcar como leída
+PATCH {{baseUrl}}/conversaciones/{{abrir.response.body.id}}/leida
+Authorization: Bearer {{login.response.body.token}}
