@@ -507,6 +507,239 @@ Errores:
 - 403: la foto es de un artículo que no es tuyo
 - 404: la foto no existe
 
+## Mensajería y notificaciones (Sprint 3)
+
+Resumen de las rutas del sprint 3. El detalle de cada una está en las secciones siguientes.
+
+| Método y URL | Qué hace | Quién |
+|---|---|---|
+| `POST /api/conversaciones` | Abrir una conversación sobre un artículo (o recuperar la que ya existe) | Con sesión, no el dueño del artículo |
+| `GET /api/conversaciones` | Bandeja de conversaciones | Con sesión |
+| `GET /api/conversaciones/sin-leer` | Total de mensajes sin leer | Con sesión |
+| `GET /api/conversaciones/:idConversacion` | Una conversación | Participante |
+| `GET /api/conversaciones/:idConversacion/mensajes` | Mensajes de una conversación | Participante |
+| `PATCH /api/conversaciones/:idConversacion/leida` | Marcar como leídos los mensajes recibidos | Participante |
+| `GET /api/notificaciones` | Mis 50 notificaciones más recientes | Con sesión |
+| `GET /api/notificaciones/sin-leer` | Total de notificaciones sin leer | Con sesión |
+| `PATCH /api/notificaciones/:idNotificacion/leida` | Marcar una notificación como leída | Dueño |
+| `PATCH /api/notificaciones/leidas` | Marcar todas como leídas | Con sesión |
+
+Los mensajes **se envían por socket** (evento `mensaje_enviar`), no por REST. Por REST solo se leen.
+
+Notas:
+- No hay `/api/mensajes`: los mensajes cuelgan de su conversación, `/api/conversaciones/:idConversacion/mensajes`. Se quitan `mensajes.routes.js` y su línea en `api.routes.js`.
+- Participante = el comprador o el vendedor de la conversación. Si no lo eres, 403; si la conversación no existe, 404.
+- Solo puede haber una conversación por artículo y comprador (`UNIQUE (id_articulo, id_comprador)`).
+- Nunca se devuelve el email de otro usuario.
+- `/sin-leer` y `/leidas` se registran en el router antes que `/:idConversacion` y `/:idNotificacion`.
+
+## Objetos de mensajería que devuelve la API
+
+**Conversación** (en la bandeja y en el detalle):
+```json
+{
+    "id": 12,
+    "articulo": { "id": 7, "titulo": "Anillo de plata con circonita", "precio": 45, "estado": "publicado", "foto_portada": "/uploads/seed-01.jpg" },
+    "otro_usuario": { "id": 5, "nombre_usuario": "ana_joyas", "foto_url": null },
+    "soy": "comprador",
+    "ultimo_mensaje": { "texto": "¿Sigue disponible?", "id_emisor": 3, "fecha_creacion": "2026-11-24T18:30:00.000Z" },
+    "sin_leer": 2,
+    "fecha_creacion": "2026-11-24T18:30:00.000Z"
+}
+```
+- `otro_usuario` es el vendedor si `soy` es `comprador`, y el comprador si `soy` es `vendedor`.
+- `ultimo_mensaje` es `null` si la conversación todavía no tiene mensajes.
+- `sin_leer` cuenta los mensajes que me han enviado y no he leído.
+
+**Mensaje**:
+```json
+{
+    "id": 41,
+    "id_conversacion": 12,
+    "id_emisor": 3,
+    "texto": "¿Sigue disponible?",
+    "leido": false,
+    "fecha_creacion": "2026-11-24T18:30:00.000Z"
+}
+```
+
+**Notificación**:
+```json
+{
+    "id": 9,
+    "tipo": "mensaje",
+    "texto": "usuario te ha escrito sobre «Anillo de plata con circonita»",
+    "enlace": "/mensajes/12",
+    "leida": false,
+    "fecha_creacion": "2026-11-24T18:30:00.000Z"
+}
+```
+`enlace` es la ruta del front a la que lleva la notificación (puede ser `null`).
+
+Valores posibles de `tipo`: `mensaje`, `cambio_estado`, `moderacion`.
+
+## Conversaciones
+
+### Abrir una conversación
+
+Method: POST
+Url: /api/conversaciones
+Headers: Authorization: Bearer <token>
+Body:
+```json
+{ "id_articulo": 7 }
+```
+Es el botón «Contactar con el vendedor». Si ya existe una conversación tuya sobre ese artículo, devuelve esa en lugar de crear otra.
+
+Response (201 si se crea, 200 si ya existía): la conversación.
+
+Errores:
+- 400: falta `id_articulo` o no es un número
+- 401: sin token
+- 403: el artículo es tuyo
+- 404: el artículo no existe o no está publicado
+
+### Bandeja de conversaciones
+
+Method: GET
+Url: /api/conversaciones
+Headers: Authorization: Bearer <token>
+
+Response (200): array de conversaciones (como comprador y como vendedor), de la que tiene el mensaje más reciente a la más antigua.
+
+### Total de mensajes sin leer
+
+Method: GET
+Url: /api/conversaciones/sin-leer
+Headers: Authorization: Bearer <token>
+
+Response (200):
+```json
+{ "sin_leer": 3 }
+```
+Es el aviso de la cabecera del front.
+
+### Una conversación
+
+Method: GET
+Url: /api/conversaciones/:idConversacion
+Headers: Authorization: Bearer <token>
+
+Response (200): la conversación.
+
+Errores:
+- 403: no participas en la conversación
+- 404: la conversación no existe
+
+### Mensajes de una conversación
+
+Method: GET
+Url: /api/conversaciones/:idConversacion/mensajes
+Headers: Authorization: Bearer <token>
+
+Response (200): array de mensajes, del más antiguo al más reciente.
+
+Errores:
+- 403: no participas en la conversación
+- 404: la conversación no existe
+
+### Marcar una conversación como leída
+
+Method: PATCH
+Url: /api/conversaciones/:idConversacion/leida
+Headers: Authorization: Bearer <token>
+
+Marca como leídos los mensajes que te ha enviado la otra persona. Los tuyos no se tocan.
+
+Response (200):
+```json
+{ "message": "Conversación marcada como leída" }
+```
+
+Errores:
+- 403: no participas en la conversación
+- 404: la conversación no existe
+
+## Notificaciones
+
+### Mis notificaciones
+
+Method: GET
+Url: /api/notificaciones
+Headers: Authorization: Bearer <token>
+
+Response (200): array con las 50 notificaciones más recientes, de la más nueva a la más antigua.
+
+### Total de notificaciones sin leer
+
+Method: GET
+Url: /api/notificaciones/sin-leer
+Headers: Authorization: Bearer <token>
+
+Response (200):
+```json
+{ "sin_leer": 2 }
+```
+
+### Marcar una notificación como leída
+
+Method: PATCH
+Url: /api/notificaciones/:idNotificacion/leida
+Headers: Authorization: Bearer <token>
+
+Response (200): la notificación actualizada.
+
+Errores:
+- 403: la notificación no es tuya
+- 404: la notificación no existe
+
+### Marcar todas como leídas
+
+Method: PATCH
+Url: /api/notificaciones/leidas
+Headers: Authorization: Bearer <token>
+
+Response (200):
+```json
+{ "message": "Notificaciones marcadas como leídas" }
+```
+
+### Cuándo se crea una notificación
+
+Las crea siempre el back con `crearNotificacion(idUsuario, tipo, texto, enlace)` (`src/socket/notificaciones.js`): la guarda en la tabla `notificacion` y se la envía al usuario con el evento `notificacion_nueva`.
+
+| Cuándo | A quién | `tipo` | `texto` (ejemplo) | `enlace` |
+|---|---|---|---|---|
+| Primer mensaje de una conversación | Al vendedor | `mensaje` | usuario te ha escrito sobre «Anillo de plata con circonita» | `/mensajes/:idConversacion` |
+| Un artículo se marca como vendido | A los compradores que tenían conversación sobre él | `cambio_estado` | «Anillo de plata con circonita» se ha vendido | `/articulos/:idArticulo` |
+| Decisión de moderación (sprint 4) | Al dueño del artículo | `moderacion` | Se ha retirado «…»: motivo | `/mis-articulos` |
+
+## Tiempo real (socket.io)
+
+El servidor de sockets está en el mismo puerto que la API: `http://localhost:3000`. Solo acepta conexiones de `http://localhost:4200`.
+
+**Conectarse** (con el token del login):
+```js
+import { io } from 'socket.io-client';
+const socket = io('http://localhost:3000', { auth: { token } });
+```
+Si el token falta, no es válido o el usuario está bloqueado, la conexión falla con `connect_error` y uno de estos mensajes: `Debes iniciar sesión`, `La sesión no es válida o ha caducado`, `Usuario no válido`.
+
+Cada usuario entra en su sala (`usuario:<id>`), así que recibe los eventos en todas sus pestañas abiertas.
+
+**Eventos** (nombres en `src/socket/events.js`):
+
+| Evento | Dirección | Datos | Cuándo |
+|---|---|---|---|
+| `mensaje_enviar` | Front → back | `{ "id_conversacion": 12, "texto": "¿Sigue disponible?" }` | Al enviar un mensaje |
+| `mensaje_nuevo` | Back → front | El mensaje guardado | A los dos participantes, también a quien lo envía |
+| `error_mensaje` | Back → front | `{ "message": "...", "id_conversacion": 12 }` | Solo a quien lo envía, si no se ha podido guardar |
+| `notificacion_nueva` | Back → front | La notificación | Al usuario de la notificación |
+
+`mensaje_enviar` falla con `error_mensaje` si el texto está vacío o tiene más de 1000 caracteres, si la conversación no existe o si no participas en ella.
+
+Para probar los sockets no vale REST Client: hay scripts con `socket.io-client` en `scripts/` (`prueba-socket.mjs` y `prueba-chat.mjs`).
+
 ## Módulos todavía pendientes
 
 En el código recibido hay routers de Express creados para estos módulos, pero **no contienen endpoints** todavía:
@@ -517,9 +750,9 @@ En el código recibido hay routers de Express creados para estos módulos, pero 
 | Categorías | `/api/categorias` | Sprint 2: contrato definido arriba |
 | Fotos de artículos | `/api/fotos` | Sprint 2: contrato definido arriba |
 | Búsqueda | — | Se elimina: la búsqueda es `GET /api/articulos` con filtros |
-| Conversaciones | `/api/conversaciones` | Router vacío |
-| Mensajes | `/api/mensajes` | Router vacío |
-| Notificaciones | `/api/notificaciones` | Router vacío |
+| Conversaciones | `/api/conversaciones` | Sprint 3: contrato definido arriba |
+| Mensajes | — | Se elimina: los mensajes son `/api/conversaciones/:idConversacion/mensajes` |
+| Notificaciones | `/api/notificaciones` | Sprint 3: contrato definido arriba |
 | Reportes | `/api/reportes` | Router vacío |
 | Moderación | `/api/moderacion` | Router vacío |
 | Administración | `/api/admin` | Router vacío |
