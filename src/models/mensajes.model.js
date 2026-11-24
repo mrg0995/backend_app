@@ -42,4 +42,44 @@ const marcarLeidos = async (idConversacion, idUsuario) => {
     return result;
 }
 
-export default { selectByConversacion, marcarLeidos };
+/**
+ * Un mensaje por su id.
+ * @param {number} id
+ * @returns {Promise<Mensaje|null>}
+ */
+const selectById = async (id) => {
+    const [result] = await db.execute(`SELECT ${COLUMNAS} FROM mensaje WHERE id = ?`, [id]);
+    if (result.length === 0) {
+        return null;
+    }
+    return aMensaje(result[0]);
+}
+
+/**
+ * Guarda un mensaje. Devuelve el resultado de MySQL para usar result.insertId.
+ * @param {number} idConversacion
+ * @param {number} idEmisor
+ * @param {string} texto
+ */
+const insert = async (idConversacion, idEmisor, texto) => {
+    const [result] = await db.execute(
+        'INSERT INTO mensaje (id_conversacion, id_emisor, texto) VALUES (?, ?, ?)',
+        [idConversacion, idEmisor, texto]
+    );
+    return result;
+}
+
+/**
+ * Cuántos mensajes tiene una conversación (para saber si es el primero).
+ * @param {number} idConversacion
+ * @returns {Promise<number>}
+ */
+const countByConversacion = async (idConversacion) => {
+    const [result] = await db.execute(
+        'SELECT COUNT(*) AS total FROM mensaje WHERE id_conversacion = ?',
+        [idConversacion]
+    );
+    return result[0].total;
+}
+
+export default { selectByConversacion, marcarLeidos, selectById, insert, countByConversacion };
