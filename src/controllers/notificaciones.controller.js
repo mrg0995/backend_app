@@ -39,18 +39,20 @@ export const getSinLeer = async (req, res) => {
  *
  * Respuestas:
  * - 200: la notificación actualizada
+ * - 400: el id no es un número
  * - 403: la notificación no es tuya
- * - 404: la notificación no existe (o el id no es un número)
+ * - 404: la notificación no existe
  *
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
 export const marcarLeida = async (req, res) => {
     const idNotificacion = Number(req.params.idNotificacion);
-    const notificacion = Number.isInteger(idNotificacion) && idNotificacion > 0
-        ? await notificacionesModel.selectById(idNotificacion)
-        : null;
+    if (!Number.isInteger(idNotificacion) || idNotificacion <= 0) {
+        return res.status(400).json({ message: 'El id de la notificación no es válido' });
+    }
 
+    const notificacion = await notificacionesModel.selectById(idNotificacion);
     if (!notificacion) {
         return res.status(404).json({ message: 'La notificación no existe' });
     }

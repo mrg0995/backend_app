@@ -45,6 +45,10 @@ Authorization: Bearer {{loginOtro.response.body.token}}
 PATCH {{baseUrl}}/notificaciones/999999/leida
 Authorization: Bearer {{login.response.body.token}}
 
+### 5b. Marcar con un id que no es un número (400)
+PATCH {{baseUrl}}/notificaciones/abc/leida
+Authorization: Bearer {{login.response.body.token}}
+
 ### 6. Marcar mi notificación como leída (200, con "leida": true)
 PATCH {{baseUrl}}/notificaciones/{{lista.response.body.$[0].id}}/leida
 Authorization: Bearer {{login.response.body.token}}
