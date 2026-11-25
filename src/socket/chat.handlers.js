@@ -2,6 +2,7 @@ import EVENTS from './events.js';
 import { emitirAUsuario } from './index.js';
 import conversacionesModel from '../models/conversaciones.model.js';
 import mensajesModel from '../models/mensajes.model.js';
+import { crearNotificacion } from './notificaciones.js';
 
 /** Máximo de caracteres de un mensaje (docs/api.md) */
 const MAX_TEXTO = 1000;
@@ -55,7 +56,17 @@ export function registerChatHandlers(io, socket) {
             emitirAUsuario(conversacion.id_vendedor, EVENTS.MENSAJE_NUEVO, mensaje);
 
             // Primer mensaje de la conversación: aviso al otro participante.
-            // NOTIFICACIÓN: hacer cuando esté crearNotificacion de Mariel (src/socket/notificaciones.js)
+            const total = await mensajesModel.countByConversacion(conversacion.id);
+            if (total === 1) {
+                const idReceptor = idEmisor === conversacion.id_comprador ? conversacion.id_vendedor : conversacion.id_comprador;
+                const { articulo } = await conversacionesModel.selectParaUsuario(conversacion.id, idReceptor);
+                await crearNotificacion(
+                    idReceptor,
+                    'mensaje',
+                    `${socket.usuario.nombre_usuario} te ha escrito sobre «${articulo.titulo}»`,
+                    `/mensajes/${conversacion.id}`
+                );
+            }
             
         } catch (err) {
             console.error(err);
