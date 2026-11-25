@@ -592,7 +592,7 @@ Body:
 ```
 Es el botón «Contactar con el vendedor». Si ya existe una conversación tuya sobre ese artículo, devuelve esa en lugar de crear otra.
 
-Response (201 si se crea, 200 si ya existía): la conversación.
+Response (201 si se crea, 200 si ya existía): la conversación (ver [Objetos de mensajería](#objetos-de-mensajería-que-devuelve-la-api)).
 
 Errores:
 - 400: falta `id_articulo` o no es un número
@@ -606,7 +606,7 @@ Method: GET
 Url: /api/conversaciones
 Headers: Authorization: Bearer <token>
 
-Response (200): array de conversaciones (como comprador y como vendedor), de la que tiene el mensaje más reciente a la más antigua.
+Response (200): array de conversaciones (como comprador y como vendedor), de la que tiene el mensaje más reciente a la más antigua. Cada una con el formato de [Objetos de mensajería](#objetos-de-mensajería-que-devuelve-la-api).
 
 ### Total de mensajes sin leer
 
@@ -626,7 +626,7 @@ Method: GET
 Url: /api/conversaciones/:idConversacion
 Headers: Authorization: Bearer <token>
 
-Response (200): la conversación.
+Response (200): la conversación (ver [Objetos de mensajería](#objetos-de-mensajería-que-devuelve-la-api)).
 
 Errores:
 - 400: el id de la conversación no es un número
@@ -639,7 +639,7 @@ Method: GET
 Url: /api/conversaciones/:idConversacion/mensajes
 Headers: Authorization: Bearer <token>
 
-Response (200): array de mensajes, del más antiguo al más reciente.
+Response (200): array de mensajes, del más antiguo al más reciente. Cada uno con el formato de [Objetos de mensajería](#objetos-de-mensajería-que-devuelve-la-api).
 
 Errores:
 - 400: el id de la conversación no es un número
@@ -672,7 +672,7 @@ Method: GET
 Url: /api/notificaciones
 Headers: Authorization: Bearer <token>
 
-Response (200): array con las 50 notificaciones más recientes, de la más nueva a la más antigua.
+Response (200): array con las 50 notificaciones más recientes, de la más nueva a la más antigua. Cada una con el formato de [Objetos de mensajería](#objetos-de-mensajería-que-devuelve-la-api).
 
 ### Total de notificaciones sin leer
 
@@ -691,7 +691,7 @@ Method: PATCH
 Url: /api/notificaciones/:idNotificacion/leida
 Headers: Authorization: Bearer <token>
 
-Response (200): la notificación actualizada.
+Response (200): la notificación actualizada (ver [Objetos de mensajería](#objetos-de-mensajería-que-devuelve-la-api)).
 
 Errores:
 - 400: el id de la notificación no es un número
@@ -743,7 +743,7 @@ Cada usuario entra en su sala (`usuario:<id>`), así que recibe los eventos en t
 
 `mensaje_enviar` falla con `error_mensaje` si el texto está vacío o tiene más de 1000 caracteres, si la conversación no existe o si no participas en ella.
 
-Para probar los sockets no vale REST Client: hay scripts con `socket.io-client` en `scripts/` (`prueba-socket.mjs` y `prueba-chat.mjs`).
+Para probar los sockets no vale REST Client: hay scripts con `socket.io-client` en `scripts/` (`prueba-socket.mjs` para la conexión y `prueba-mensajes.mjs` para el chat y el aviso del primer mensaje).
 
 ## Módulos todavía pendientes
 
