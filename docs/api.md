@@ -694,6 +694,7 @@ Headers: Authorization: Bearer <token>
 Response (200): la notificación actualizada.
 
 Errores:
+- 400: el id de la notificación no es un número
 - 403: la notificación no es tuya
 - 404: la notificación no existe
 

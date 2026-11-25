@@ -85,3 +85,56 @@ SELECT a.id,
   0
 FROM articulo a
 WHERE a.id_usuario IN (@ana, @luis, @sara);
+
+
+-- ---------------------------------------------------------
+-- Sprint 3 (Mariel): conversaciones, mensajes y notificaciones
+-- Tres conversaciones con mensajes leídos y sin leer, y avisos de prueba.
+-- No hay ninguna de usuario@test.com sobre el artículo 1: la usan
+-- requests/conversaciones.http y scripts/prueba-mensajes.mjs para crearla.
+--
+-- Al cargar el seed, quedan sin leer:
+--   ana_joyas:  1 mensaje y 1 notificación
+--   usuario:    2 mensajes
+--   luis_joyas: 1 notificación
+-- ---------------------------------------------------------
+SET @usuario = (SELECT id FROM usuario WHERE nombre_usuario = 'usuario');
+SET @pulsera = (SELECT id FROM articulo WHERE titulo = 'Pulsera de cuero y plata');
+SET @collar  = (SELECT id FROM articulo WHERE titulo = 'Collar de perlas cultivadas');
+SET @esclava = (SELECT id FROM articulo WHERE titulo = 'Esclava de oro');
+
+-- 1. luis_joyas pregunta a ana_joyas por la pulsera. El último mensaje, ana no lo ha leído.
+INSERT INTO conversacion (id_articulo, id_comprador, id_vendedor, fecha_creacion)
+VALUES (@pulsera, @luis, @ana, NOW() - INTERVAL 3 DAY);
+SET @conv1 = LAST_INSERT_ID();
+
+INSERT INTO mensaje (id_conversacion, id_emisor, texto, leido, fecha_creacion) VALUES
+  (@conv1, @luis, 'Buenas, ¿la pulsera es ajustable?',          TRUE,  NOW() - INTERVAL 3 DAY),
+  (@conv1, @ana,  'Sí, el cierre tiene dos posiciones.',         TRUE,  NOW() - INTERVAL 3 DAY + INTERVAL 2 HOUR),
+  (@conv1, @luis, '¡Genial! ¿Podrías enviarla a Sevilla?',       FALSE, NOW() - INTERVAL 2 HOUR);
+
+-- 2. usuario pregunta a luis_joyas por el collar. Las dos respuestas de luis están sin leer.
+INSERT INTO conversacion (id_articulo, id_comprador, id_vendedor, fecha_creacion)
+VALUES (@collar, @usuario, @luis, NOW() - INTERVAL 1 DAY);
+SET @conv2 = LAST_INSERT_ID();
+
+INSERT INTO mensaje (id_conversacion, id_emisor, texto, leido, fecha_creacion) VALUES
+  (@conv2, @usuario, 'Hola, ¿las perlas son naturales?',            TRUE,  NOW() - INTERVAL 1 DAY),
+  (@conv2, @luis,    'Son cultivadas y vienen con su certificado.', FALSE, NOW() - INTERVAL 30 MINUTE),
+  (@conv2, @luis,    'Si te interesa, te hago buen precio.',        FALSE, NOW() - INTERVAL 25 MINUTE);
+
+-- 3. ana_joyas preguntó a sara_joyas por la esclava, que después se vendió. Todo leído.
+INSERT INTO conversacion (id_articulo, id_comprador, id_vendedor, fecha_creacion)
+VALUES (@esclava, @ana, @sara, NOW() - INTERVAL 6 DAY);
+SET @conv3 = LAST_INSERT_ID();
+
+INSERT INTO mensaje (id_conversacion, id_emisor, texto, leido, fecha_creacion) VALUES
+  (@conv3, @ana,  'Hola, ¿la esclava lleva algún grabado?',              TRUE, NOW() - INTERVAL 6 DAY),
+  (@conv3, @sara, 'No, es lisa. Ya la tengo reservada, lo siento.',      TRUE, NOW() - INTERVAL 5 DAY);
+
+-- Notificaciones: las que habría creado crearNotificacion en cada caso.
+INSERT INTO notificacion (id_usuario, tipo, texto, enlace, leida, fecha_creacion) VALUES
+  (@sara, 'mensaje',       'ana_joyas te ha escrito sobre «Esclava de oro»',            CONCAT('/mensajes/', @conv3),   TRUE,  NOW() - INTERVAL 6 DAY),
+  (@ana,  'cambio_estado', '«Esclava de oro» se ha vendido',                            CONCAT('/articulos/', @esclava), FALSE, NOW() - INTERVAL 4 DAY),
+  (@ana,  'mensaje',       'luis_joyas te ha escrito sobre «Pulsera de cuero y plata»',  CONCAT('/mensajes/', @conv1),   TRUE,  NOW() - INTERVAL 3 DAY),
+  (@luis, 'mensaje',       'usuario te ha escrito sobre «Collar de perlas cultivadas»', CONCAT('/mensajes/', @conv2),   FALSE, NOW() - INTERVAL 1 DAY);
