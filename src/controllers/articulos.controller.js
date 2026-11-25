@@ -1,6 +1,7 @@
 import * as ArticulosModel from '../models/articulos.model.js';
 import * as CategoriasModel from '../models/categorias.model.js';
 import UsuariosModel from '../models/usuarios.model.js';
+import { notificarArticuloVendido } from '../socket/notificaciones.js';
 
 const ESTADOS_CONSERVACION_VALIDOS = ['nuevo', 'como_nuevo', 'buen_estado', 'aceptable'];
 
@@ -185,6 +186,10 @@ export const marcarVendido = async (req, res, next) => {
 
         await ArticulosModel.updateEstado(req.articulo.id, 'vendido');
         const articuloVendido = await ArticulosModel.selectById(req.articulo.id);
+
+        // Aviso a los compradores que tenían una conversación sobre el artículo (añadido por Mariel)
+        await notificarArticuloVendido(articuloVendido);
+        
         res.json(articuloVendido);
     } catch (error) {
         next(error);

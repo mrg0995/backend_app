@@ -1,4 +1,5 @@
 import notificacionesModel from '../models/notificaciones.model.js';
+import conversacionesModel from '../models/conversaciones.model.js';
 import EVENTS from './events.js';
 import { emitirAUsuario } from './index.js';
 
@@ -31,4 +32,33 @@ export const crearNotificacion = async (idUsuario, tipo, texto, enlace = null) =
     }
 
     return notificacion;
+};
+
+/**
+ * Avisa de que un artículo se ha vendido a todos los compradores que tenían una
+ * conversación sobre él (tipo 'cambio_estado', con enlace al detalle del artículo).
+ *
+ * Se llama desde marcarVendido (articulos.controller.js) después de cambiar el estado.
+ * Si algo falla, solo se apunta en la consola: el artículo ya está vendido y la
+ * respuesta al vendedor no debe fallar por un aviso.
+ *
+ * @param {{id: number, titulo: string}} articulo - El artículo que se acaba de vender
+ * @returns {Promise<number>} Cuántos compradores han recibido el aviso
+ */
+export const notificarArticuloVendido = async (articulo) => {
+    try {
+        const compradores = await conversacionesModel.selectCompradoresByArticulo(articulo.id);
+        for (const idComprador of compradores) {
+            await crearNotificacion(
+                idComprador,
+                'cambio_estado',
+                `«${articulo.titulo}» se ha vendido`,
+                `/articulos/${articulo.id}`
+            );
+        }
+        return compradores.length;
+    } catch (error) {
+        console.error('No se pudo avisar de la venta:', error.message);
+        return 0;
+    }
 };

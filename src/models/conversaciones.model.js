@@ -148,4 +148,18 @@ const countSinLeer = async (idUsuario) => {
     return result[0].total;
 }
 
-export default { selectByUsuario, selectParaUsuario, selectById, selectByArticuloComprador, insert, countSinLeer };
+/**
+ * Ids de los compradores que tienen una conversación sobre un artículo
+ * (para avisarles cuando se vende).
+ * @param {number} idArticulo
+ * @returns {Promise<number[]>}
+ */
+const selectCompradoresByArticulo = async (idArticulo) => {
+    const [result] = await db.execute(
+        'SELECT id_comprador FROM conversacion WHERE id_articulo = ?',
+        [idArticulo]
+    );
+    return result.map((fila) => fila.id_comprador);
+}
+
+export default { selectByUsuario, selectParaUsuario, selectById, selectByArticuloComprador, insert, countSinLeer, selectCompradoresByArticulo };
