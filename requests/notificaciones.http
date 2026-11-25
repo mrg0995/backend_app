@@ -60,3 +60,17 @@ Authorization: Bearer {{login.response.body.token}}
 ### 8. Ya no queda ninguna sin leer (200, "sin_leer": 0)
 GET {{baseUrl}}/notificaciones/sin-leer
 Authorization: Bearer {{login.response.body.token}}
+
+
+### 9. Ana marca como vendida la pulsera (200)
+# luis_joyas tenía una conversación sobre ella, así que le llega un aviso
+PATCH {{baseUrl}}/articulos/4/vendido
+Authorization: Bearer {{login.response.body.token}}
+
+### 10. Notificaciones de luis_joyas: la primera es «Pulsera de cuero y plata» se ha vendido
+GET {{baseUrl}}/notificaciones
+Authorization: Bearer {{loginOtro.response.body.token}}
+
+### 11. Venderla otra vez (409): no se crea ningún aviso más
+PATCH {{baseUrl}}/articulos/4/vendido
+Authorization: Bearer {{login.response.body.token}}
