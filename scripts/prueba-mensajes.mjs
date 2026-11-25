@@ -21,6 +21,7 @@ const conectar = (nombre, token) => new Promise((resolve) => {
     const socket = io(URL, { auth: { token }, reconnection: false });
     socket.on('mensaje_nuevo', (m) => console.log(`   ${nombre} recibe mensaje_nuevo: #${m.id} «${m.texto}»`));
     socket.on('error_mensaje', (e) => console.log(`   ${nombre} recibe error_mensaje: ${e.message}`));
+    socket.on('notificacion_nueva', (n) => console.log(`   ${nombre} recibe notificacion_nueva: «${n.texto}» → ${n.enlace}`));
     socket.on('connect', () => resolve(socket));
 });
 
@@ -47,8 +48,8 @@ const usuario = await conectar('usuario', tokenUsuario);
 const ana = await conectar('ana', tokenAna);
 const luis = await conectar('luis', tokenLuis);
 
-await enviar('1. usuario escribe (les llega a los dos)', usuario, { id_conversacion: conversacion.id, texto: 'Hola, ¿sigue disponible?' });
-await enviar('2. ana responde', ana, { id_conversacion: conversacion.id, texto: 'Sí, claro' });
+await enviar('1. usuario escribe (les llega a los dos, y ana recibe la notificación)', usuario, { id_conversacion: conversacion.id, texto: 'Hola, ¿sigue disponible?' });
+await enviar('2. ana responde (ya no hay notificación)', ana, { id_conversacion: conversacion.id, texto: 'Sí, claro' });
 await enviar('3. Mensaje vacío (error)', usuario, { id_conversacion: conversacion.id, texto: '   ' });
 await enviar('4. Más de 1000 caracteres (error)', usuario, { id_conversacion: conversacion.id, texto: 'x'.repeat(1001) });
 await enviar('5. Conversación que no existe (error)', usuario, { id_conversacion: 9999, texto: 'Hola' });

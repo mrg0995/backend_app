@@ -1,0 +1,58 @@
+@baseUrl = http://localhost:3000/api
+
+# Las notificaciones no se crean por REST: las crea el back con crearNotificacion
+# (al escribir un primer mensaje, al vender un artículo…). Para probar estas rutas
+# hace falta que el usuario tenga alguna, por ejemplo las del seed.
+# Ejecuta primero los dos logins y después la petición 2 (guarda el id de la primera notificación).
+
+### Login del usuario de prueba
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "ana.joyas@test.com",
+    "password": "12345678"
+}
+
+### Login de otro usuario (para la prueba de 403)
+# @name loginOtro
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "luis.joyas@test.com",
+    "password": "12345678"
+}
+
+### 1. Mis notificaciones sin token (401)
+GET {{baseUrl}}/notificaciones
+
+### 2. Mis notificaciones: las 50 más recientes (200)
+# @name lista
+GET {{baseUrl}}/notificaciones
+Authorization: Bearer {{login.response.body.token}}
+
+### 3. Cuántas tengo sin leer (200)
+GET {{baseUrl}}/notificaciones/sin-leer
+Authorization: Bearer {{login.response.body.token}}
+
+### 4. Otro usuario intenta marcar mi notificación como leída (403)
+PATCH {{baseUrl}}/notificaciones/{{lista.response.body.$[0].id}}/leida
+Authorization: Bearer {{loginOtro.response.body.token}}
+
+### 5. Marcar una notificación que no existe (404)
+PATCH {{baseUrl}}/notificaciones/999999/leida
+Authorization: Bearer {{login.response.body.token}}
+
+### 6. Marcar mi notificación como leída (200, con "leida": true)
+PATCH {{baseUrl}}/notificaciones/{{lista.response.body.$[0].id}}/leida
+Authorization: Bearer {{login.response.body.token}}
+
+### 7. Marcar todas como leídas (200)
+PATCH {{baseUrl}}/notificaciones/leidas
+Authorization: Bearer {{login.response.body.token}}
+
+### 8. Ya no queda ninguna sin leer (200, "sin_leer": 0)
+GET {{baseUrl}}/notificaciones/sin-leer
+Authorization: Bearer {{login.response.body.token}}
