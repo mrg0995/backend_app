@@ -745,6 +745,62 @@ Cada usuario entra en su sala (`usuario:<id>`), así que recibe los eventos en t
 
 Para probar los sockets no vale REST Client: hay scripts con `socket.io-client` en `scripts/` (`prueba-socket.mjs` para la conexión y `prueba-mensajes.mjs` para el chat y el aviso del primer mensaje).
 
+## Administración · Categorías (Sprint 4)
+
+Las tres rutas necesitan `Authorization: Bearer <token>` y rol `administrador`. Sin token devuelven 401 y con otro rol, 403. La lista sigue siendo `GET /api/categorias`.
+
+### Crear una categoría
+
+Method: POST
+Url: /api/admin/categorias
+Headers: Authorization: Bearer <token>
+Body:
+```json
+{ "nombre": "Pulseras" }
+```
+
+Response (201):
+```json
+{ "message": "Categoría creada", "categoria": { "id": 5, "nombre": "Pulseras" } }
+```
+
+Errores:
+- 400: falta el nombre o está vacío
+- 409: ya existe una categoría con ese nombre
+
+### Editar una categoría
+
+Method: PUT
+Url: /api/admin/categorias/:idCategoria
+Headers: Authorization: Bearer <token>
+Body: `{ "nombre": "Pulseras y brazaletes" }`
+
+Response (200):
+```json
+{ "message": "Categoría actualizada", "categoria": { "id": 5, "nombre": "Pulseras y brazaletes" } }
+```
+
+Errores:
+- 400: el id no es un número, o falta el nombre
+- 404: la categoría no existe
+- 409: ya existe otra categoría con ese nombre
+
+### Borrar una categoría
+
+Method: DELETE
+Url: /api/admin/categorias/:idCategoria
+Headers: Authorization: Bearer <token>
+
+Response (200):
+```json
+{ "message": "Categoría borrada" }
+```
+
+Errores:
+- 400: el id no es un número
+- 404: la categoría no existe
+- 409: la categoría tiene artículos y no se puede borrar
+
 ## Módulos todavía pendientes
 
 En el código recibido hay routers de Express creados para estos módulos, pero **no contienen endpoints** todavía:
